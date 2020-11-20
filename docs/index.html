@@ -1,0 +1,828 @@
+
+<html>
+<head>
+<title>Calculation of optimal CGM trial duration</title>
+<meta name="UNIPDTool" content="initial-scale=1">
+<meta http-equiv=keywords content="Continuous glucose monitoring, time in range, clinical trial, optimal duration, uncertainty, estimate">
+<meta http-equiv=description content="Calculator of optimal continuous glucose monitoring duration">
+<meta http-equiv=author content="Nunzio Camerlingo, MSc, University of Padova, Padova, Italy">
+<link rel="stylesheet" type=text/css href="style.css">
+<script LANGUAGE=javascript1.2>
+
+
+function formula(n,p,a) {
+var v = (1/p) * (Math.sqrt(p*(1-p)*(1/n + (2/n)*(a/(1-a)) + (2/(Math.pow(n,2)))*(a/(Math.pow(1-a,2)))*((Math.pow(a,n))-1))));
+return v;
+}
+
+function formulaA1(n,p,a,unc) {
+var v = -unc + ((1/p) * (Math.sqrt(p*(1-p)*(1/n + (2/n)*(a/(1-a)) + (2/(Math.pow(n,2)))*(a/(Math.pow(1-a,2)))*((Math.pow(a,n))-1)))));
+return v;
+}
+
+function findZero(theformula,p,a,unc,stL,stR,tol,maxiter) {
+	var iter=1;
+	var error=(stR-stL)/2;
+	var flag=0;
+		
+		while((error>tol)&&(iter<maxiter)&&(flag==0)) {
+			var stC=(stL+stR)/2;
+			if(theformula(stC,p,a,unc)*theformula(stR,p,a,unc)>0){
+				stR=stC;
+				error=(stR-stL)/2;
+			} else {
+				stL=stC;
+				error=(stR-stL)/2;
+				}
+			
+		iter+=1;
+		}
+	return stC;
+}
+
+
+function disable(form) {
+if(form.optype2.checked==true) {
+document.getElementById("RelUnc").disabled=true;
+document.getElementById("TIRs").disabled=true;
+document.getElementById("Ts").disabled=true;
+document.getElementById("pr").disabled=true;
+document.getElementById("Compute").disabled=true;
+document.getElementById("resetButton").disabled=true;
+
+document.getElementById("TIR1").disabled=false;
+document.getElementById("TITR1").disabled=false;
+document.getElementById("TAR1").disabled=false;
+document.getElementById("TBR1").disabled=false;
+document.getElementById("trdur").disabled=false;
+document.getElementById("Ts1").disabled=false;
+document.getElementById("Compute1").disabled=false;
+document.getElementById("resetButton1").disabled=false;
+
+}
+if(form.optype1.checked==true) {
+document.getElementById("RelUnc").disabled=false;
+document.getElementById("TIRs").disabled=false;
+document.getElementById("Ts").disabled=false;
+document.getElementById("pr").disabled=false;
+document.getElementById("Compute").disabled=false;
+document.getElementById("resetButton").disabled=false;
+document.getElementById("TIR1").disabled=true;
+document.getElementById("TITR1").disabled=true;
+document.getElementById("TAR1").disabled=true;
+document.getElementById("TBR1").disabled=true;
+document.getElementById("trdur").disabled=true;
+document.getElementById("Ts1").disabled=true;
+document.getElementById("Compute1").disabled=true;
+document.getElementById("resetButton1").disabled=true;
+}
+}
+
+function compute(form) {
+
+if((form.TIRs.value==null)||(form.TIRs.value=="")){
+alert('Please enter the time-in-range metric');
+return false;
+}
+
+if((form.RelUnc.value==null)||(form.RelUnc.value=="")||(isNaN(form.RelUnc.value))){
+alert('Please enter the desired relative uncertainty');
+return false;
+}
+
+if((form.Ts.value==10)||(form.Ts.value==15)){
+alert('Work in progress (only 5 min available)');
+return false;
+}
+
+
+if((form.pr.value==null)||(form.pr.value=="")||(isNaN(form.pr.value))){
+	switch(form.TIRs.value) {
+		case "TBR":
+		var pr = 0.043;
+		var alpha = 0.933;
+		break;
+		
+		case "TIR":
+		var pr = 0.606;
+		var alpha = 0.963;
+		break;
+		
+		case "TITR":
+		var pr = 0.413;
+		var alpha = 0.958;
+		break;
+		
+		case "TAR":
+		var pr = 0.325;
+		var alpha = 0.968;
+		break;
+		}
+	} else {
+	var pr = form.pr.value/100;
+	}
+	
+switch(form.TIRs.value) {
+		case "TBR":
+		var alpha = 0.933;
+		break;
+		
+		case "TIR":
+		var alpha = 0.963;
+		break;
+		
+		case "TITR":
+		var alpha = 0.958;
+		break;
+		
+		case "TAR":
+		var alpha = 0.968;
+		break;
+		}
+
+var relunc = form.RelUnc.value/100;
+var tol = 0.00000000001;
+
+var nsamples = findZero(formulaA1,pr,alpha,relunc,1,100000000,0.0000000001,100000)
+var ndays = Math.ceil(nsamples*form.Ts.value/1440)
+form.ndays.value = ndays;
+
+form.uncTIR.value = ((formula(nsamples,0.606,0.963))*100).toFixed(2);
+form.uncTITR.value = ((formula(nsamples,0.413,0.958))*100).toFixed(2);
+form.uncTBR.value = ((formula(nsamples,0.043,0.933))*100).toFixed(2);
+form.uncTAR.value = ((formula(nsamples,0.325,0.968))*100).toFixed(2);
+
+
+}
+
+
+
+function computenew(form) {
+
+if((form.TIR1.checked==false)&&(form.TITR1.checked==false)&&(form.TAR1.checked==false)&&(form.TBR1.checked==false)){
+alert('Please check at least one time-in-range');
+return false;
+}
+
+if((form.Ts1.value==10)||(form.Ts1.value==15)){
+alert('Work in progress (only 5 min available)');
+return false;
+}
+
+if((form.trdur.value==0)||(form.trdur.value==null)||(form.trdur.value=="")||(isNaN(form.trdur.value))){
+alert('Please enter the trial duration');
+return false;
+}
+
+var nsamples = form.trdur.value*1440/form.Ts1.value;
+
+if (form.TIR1.checked==true) {
+form.uncTIR.value = ((formula(nsamples,0.606,0.963))*100).toFixed(2);
+form.sdTIR.value = (form.uncTIR.value*form.TIR1value.value/100).toFixed(2)
+}
+if (form.TITR1.checked==true) {
+form.uncTITR.value = ((formula(nsamples,0.413,0.958))*100).toFixed(2);
+form.sdTITR.value = (form.uncTITR.value*form.TITR1value.value/100).toFixed(2)
+}
+if (form.TBR1.checked==true) {
+form.uncTBR.value = ((formula(nsamples,0.043,0.933))*100).toFixed(2);
+form.sdTBR.value = (form.uncTBR.value*form.TBR1value.value/100).toFixed(2)
+}
+if (form.TAR1.checked==true) {
+form.uncTAR.value = ((formula(nsamples,0.325,0.968))*100).toFixed(2);
+form.sdTAR.value = (form.uncTAR.value*form.TAR1value.value/100).toFixed(2)
+}
+
+}
+
+function resetbutton2(form) {
+document.getElementById("TIR1value").disabled=true;
+document.getElementById("TITR1value").disabled=true;
+document.getElementById("TAR1value").disabled=true;
+document.getElementById("TBR1value").disabled=true;
+}
+
+
+
+</script>
+</head>
+
+<!-- old green color: #99FF99 -->
+
+<body bgcolor="#FFFFFF" text="#000000" link="#000099" vlink="#663366" alink="#000099"> <!--white, black, dark blue, dark violet --> 
+	<div align=center>
+	<table border=0 cellpadding=6 cellspacing=0 style="border-collapse: collapse" bordercolor="#111111" WIDTH=750 id=AutoNumber1 height=1 align=center>
+	<tr> <!--<tr> new table row; <th> table header bold and centered; <td> data/cell -->
+				
+		<td width=631 height=1 BGCOLOR="#FFFFFF">
+		<b>
+		
+		<font size=6 face=Arial color="990000">Computation of optimal continuous glucose monitoring duration</font>
+		<br><br>
+		<font face=Arial size="+1" color="black">Interactive tool implementing the University of Padova approach </font><br><br>
+		
+		<font face=Humalog size=3 color='gray'> <i>BETA Version</i> </font>
+		
+		<td width=120 valign=top height=17 BGCOLOR="#FFFFFF">
+		<img border=0; src="UNIPDlogo.jpg" width=100%>
+		</td>
+		
+		</b>		
+		</td>
+	</tr>
+
+	<tr>
+		<td width=740 height=36 valign=top colspan=2>
+			<hr noshade color="#000000" size=1> <!--insert a line-->
+			<align="center">
+			<b>
+			<font face="arial, sans-serif" size=-1>Based on the work by N. Camerlingo et al., <i>Scientific Reports</i>, 2020
+			</font></b>
+			<hr noshade color="#000000" size=1>
+		</td>
+	</tr>
+	
+	<tr>
+	
+	<td width=700 height=1 colspan=2 valign=top>
+	
+	<table border=0 cellpadding=6 cellspacing=0 style="border-collapse: collapse" bordercolor="#111111" width="100%" id=AutoNumber2 height=1>
+	<tr>
+		
+	<td width="80%" valign=top height=7>
+	
+
+	
+<table border=0 cellpadding=6 cellspacing=0 style="border-collapse: collapse" bordercolor="#111111" width="100%" id=AutoNumber2 height=261>
+	
+	<tr>
+	<form>
+		<td width="10%" height=25 bgcolor="#CCCCCC" colspan=2 style="text-align:center";>
+		<font color="#000000" face="Arial" size="+1">
+		<b>Operation to be performed:</b>
+		</font>
+		</td>
+	</tr>
+	
+	<tr>
+		<td width="70%" height=25 bgcolor="#CCCCCC" colspan=2 style="text-align:center";>
+		<font color="#000000" face="Arial">
+		<INPUT onclick="disable(this.form)" type=radio CHECKED name=optype id=optype1 value=1>Optimal number of days computation <INPUT onclick="disable(this.form)" type=radio name=optype id=optype2 value=2>Relative uncertainty computation
+		</font>	
+		</td>
+	</form>
+	</tr>
+	
+	
+<tr>
+	
+	<td width="65%" valign=top height=173>
+	<NOSCRIPT>Please enable JavaScript to view all features on this site.</NOSCRIPT>
+
+
+	<br>
+	<br>	
+	
+	<form>
+		<b>
+		<font face=Arial size="+1">Optimal number of days computation</font>
+		</b>
+	
+		<align="center">
+		<font size=2 face=Arial><br>
+			<br>
+			<b>Tool to be used to determine the optimal number of days granting to achieve a desired relative uncertainty in the selected time-in-range.</b> <br><br>
+			Select the <b>time-in-range</b> metric you want to consider and the <b>sampling rate</b> of the CGM sensor planned to be used. Enter the <b>desired relative uncertainty</b>.
+			Indicate, if known, the <b>percent time expected to be spent in the indicated range</b>. Press <b>'calculate'</b> button to
+			estimate the minimum number of monitoring days granting to achieve the desired relative uncertainty 
+			over the indicated time-in-range. The tool also returns the relative uncertainty around the other time-in-ranges.
+		</font>
+			
+		<b><font face=Arial size=2>
+
+			<hr noshade color="#000000" width="98%" size=1>
+
+
+		</font></b>
+
+		<b>
+		<div align=center>
+		<center>
+		<table border=0 cellpadding=0 cellspacing=0 style="border-collapse: collapse" bordercolor="#111111" width="95%" id=AutoNumber3 height=195>
+		
+		<tr>
+			<td width="70%" height=25 bgcolor="#FF9999">
+				<font color="#000000" face="Arial">
+				Time-in-range to be considered: 
+				</font>
+			</td>			
+			<td width="70%" height=25 bgcolor="#FF9999">
+				<font face=Arial color="#000000">
+				<!-- &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;  -->
+				<select name="TIRs" id="TIRs" >
+				<option value="">Select</option>
+				<option value="TIR">Time in range</option>
+				<option value="TITR">Time in tight range</option>
+				<option value="TBR">Time below range</option>
+				<option value="TAR">Time above range</option>
+				</select>
+				</font>
+			</td>
+		</tr>
+		
+		<tr>
+			<td width="70%" height=25 bgcolor="#FF9999">
+				<font color="#000000" face="Arial">
+				CGM sensor sampling rate: 
+				</font>
+			</td>			
+			<td width="70%" height=26 bgcolor="#FF9999">
+				<font face=Arial color="#000000">
+				&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+				<select name="Ts" id="Ts" required>
+				<option value=5>5</option>
+				<option value=10>10</option>
+				<option value=15>15</option>
+				</select> minutes
+				</font>
+			</td>
+		</tr>
+
+		<tr>
+			<td width="70%" height=26 bgcolor="#FF9999">
+				<font face=Arial>
+				Percent time expected to be spent in the range (if known):
+				</font>
+			</td>
+			<td width="70%" height=26 bgcolor="#FF9999">
+				<font face=Arial color="#000000">
+				<input size=8 name=pr id=pr> %
+				</font>
+			</td>
+		</tr>
+		
+		<tr>
+			<td width="52%" height=25 bgcolor="#FF9999">
+				<font face=Arial>
+				Desired relative uncertainty:
+				</font>
+			</td>
+			
+			<td width="48%" height=25 bgcolor="#FF9999">
+			<align="center">
+				<font face=Arial>
+				<b><input size=8 name=RelUnc id=RelUnc value=30> </b>%
+				</font>
+			</td>
+		</tr>
+		
+		<tr>
+		<td width="100%" height=40 colspan=2>
+		<font face=Arial color="#000000">
+		<b>
+		<input onclick="compute(this.form)" type=button value=Calculate name=Compute id=Compute>
+		<input type=reset value=Clear name=resetButton id=resetButton> </b></font>
+		</td>
+		</tr>
+
+		<tr>
+			<td width="52%" height=25 bgcolor="#7ACC7A" colspan=2 style="text-align:center";>
+				<font face=Arial>				
+				<b>Suggested monitoring duration:
+				<b><input size=8 name=ndays> </b>days</b>
+				</font>
+			</td>
+		</tr>
+		
+		<tr>
+			<td width="52%" height=25 bgcolor="#FFFFFF" colspan=2 style="text-align:center";>
+				<b><font face=Arial>
+				<br>
+				Resulting relative uncertainty around the time-in-ranges:
+				</font></b>
+			</td>
+		</tr>
+
+
+	<tr>
+		<td width="52%" height=33 bgcolor="#FFFFFF" align=left>
+		<font face=Arial>Time in range </font></td>
+		<td width="48%" height=33 bgcolor="#FFFFFF" align=left>
+		<font face=Arial> <input size=8 name=uncTIR> %</font></td>
+	</tr>
+	
+	<tr>
+		<td width="52%" height=33 bgcolor="#FFFFFF" align=left>
+		<font face=Arial>Time in tight range </font></td>
+		<td width="48%" height=33 bgcolor="#FFFFFF" align=left>
+		<font face=Arial> <input size=8 name=uncTITR> %</font></td>
+	</tr>
+
+	<tr>
+		<td width="52%" height=33 bgcolor="#FFFFFF" align=left>
+		<font face=Arial>Time below range </font></td>
+		<td width="48%" height=33 bgcolor="#FFFFFF" align=left>
+		<font face=Arial> <input size=8 name=uncTBR> %</font></td>
+	</tr>
+	
+	<tr>
+		<td width="52%" height=33 bgcolor="#FFFFFF" align=left>
+		<font face=Arial>Time above range </font></td>
+		<td width="48%" height=33 bgcolor="#FFFFFF" align=left>
+		<font face=Arial> <input size=8 name=uncTAR> %</font></td>
+	</tr>
+	
+<tr>
+<td width="100%" height=18 bgcolor="#FFFFFF" colspan=2>
+<hr noshade color="#000000" size=1></td>
+</tr>
+
+</table>
+</center>
+</div>
+
+<p></p>
+</form>
+<br>
+<hr noshade color="#000000" width="98%" size=1>
+</b>
+
+</td>
+</tr>
+
+
+
+<tr>
+	
+	<td width="65%" valign=top height=173>
+	
+	
+	<form>
+		<b>
+		<font face=Arial size="+1">Relative Uncertainty computation</font>
+		</b>
+	
+		<align="center">
+		<font size=2 face=Arial><br>
+			<br>
+			<b>Tool to be used to compute the relative uncertainty around the time-in-ranges estimated in past a past clinical of a certain number of days.</b> <br><br>
+			Indicate the values of the <b>time-in-ranges</b> computed in a completed clinical trial. Enter the <b>duration</b> of the trial under analysis and the 
+			<b>sampling rate</b> of the CGM sensor wore by subjects under analysis.
+			Press <b>'calculate'</b> button to estimate the relative uncertainty around the indicated time-in-ranges.
+			The tool also returns the standard deviation around the estimated values of the indicated time-in-ranges.
+		</font>
+			
+		<b><font face=Arial size=2>
+
+			<hr noshade color="#000000" width="98%" size=1>
+
+		</font></b>
+
+		<b>
+		<div align=center>
+		<center>
+		<table border=0 cellpadding=0 cellspacing=0 style="border-collapse: collapse" bordercolor="#111111" width="95%" id=AutoNumber3 height=195>
+		
+		<tr>
+			<td width="70%" height=25 bgcolor="#FF9999" colspan=2 style="text-align:center";>
+				<font color="#000000" face="Arial" >
+				Time-in-ranges to be considered: 
+				</font>
+			</td>			
+		</tr>
+
+		<tr>
+			<td width="70%" height=26 bgcolor="#FF9999">
+				<font face=Arial color="#000000">
+				<input onchange="document.getElementById('TIR1value').disabled=!this.checked;" type="checkbox" id=TIR1 name=TIR1 value=TIR1 disabled />
+				<label for="TIR1"> Time in range</label><br>
+				</font>
+			</td>
+			
+			<td width="70%" height=26 bgcolor="#FF9999">
+				<font face=Arial color="#000000">
+				<input size=8 name=TIR1value id=TIR1value disabled /> %
+				</font>
+			</td>
+			
+
+		</tr>
+		
+		<tr>
+			<td width="70%" height=26 bgcolor="#FF9999">
+				<font face=Arial color="#000000">
+				<input onchange="document.getElementById('TITR1value').disabled=!this.checked;" type="checkbox" id=TITR1 name=TITR1 value=TITR1 disabled />
+				<label for="TITR1"> Time in tight range</label><br>
+				</font>
+			</td>
+			
+			<td width="70%" height=26 bgcolor="#FF9999">
+				<font face=Arial color="#000000">
+				<input size=8 name=TITR1value id=TITR1value disabled /> %
+				</font>
+			</td>
+		</tr>
+		
+		<tr>
+			<td width="70%" height=26 bgcolor="#FF9999">
+				<font face=Arial color="#000000">
+				<input onchange="document.getElementById('TBR1value').disabled=!this.checked;" type="checkbox" id=TBR1 name=TBR1 value=TBR1 disabled />
+				<label for="TBR1"> Time below range</label><br>
+				</font>
+			</td>
+			
+			<td width="70%" height=26 bgcolor="#FF9999">
+				<font face=Arial color="#000000">
+				<input size=8 name=TBR1value id=TBR1value disabled /> %
+				</font>
+			</td>
+		</tr>
+		
+		<tr>
+			<td width="70%" height=26 bgcolor="#FF9999">
+				<font face=Arial color="#000000">
+				<input onchange="document.getElementById('TAR1value').disabled=!this.checked;" type="checkbox" id=TAR1 name=TAR1 value=TAR1 disabled />
+				<label for="TAR1"> Time above range</label><br>
+				</font>
+			</td>
+			
+			<td width="70%" height=26 bgcolor="#FF9999">
+				<font face=Arial color="#000000">
+				<input size=8 name=TAR1value id=TAR1value disabled /> %
+				</font>
+			</td>
+		</tr>
+		
+		<tr>
+			<td width="70%" height=26 bgcolor="#FF9999">
+				<font face=Arial>
+				Trial duration:
+				</font>
+			</td>
+			<td width="70%" height=26 bgcolor="#FF9999">
+				<font face=Arial color="#000000">
+				<input size=8 name=trdur id=trdur disabled> days
+				</font>
+			</td>
+		</tr>
+		
+		<tr>
+			<td width="70%" height=25 bgcolor="#FF9999">
+				<font color="#000000" face="Arial">
+				CGM sensor sampling rate: 
+				</font>
+			</td>			
+			<td width="70%" height=26 bgcolor="#FF9999">
+				<font face=Arial color="#000000">
+				&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+				<select name="Ts1" id="Ts1" disabled>
+				<option value=5>5</option>
+				<option value=10>10</option>
+				<option value=15>15</option>
+				</select> minutes
+				</font>
+			</td>
+		</tr>
+		
+		<tr>
+		<td width="100%" height=40 colspan=2>
+		<font face=Arial color="#000000">
+		<b>
+		<input onclick="computenew(this.form)" type=button value=Calculate name=Compute1 id=Compute1 disabled>
+		<input onclick="resetbutton2(this.form)" type=reset value=Clear name=resetButton1 id=resetButton1 disabled> </b></font>
+		</td>
+		</tr>
+
+	<tr>
+		<td width="52%" height=33 bgcolor="#FFFFFF" colspan=2>
+		
+		<table border=0 cellpadding=0 cellspacing=0 style="border-collapse: collapse" bordercolor="#111111" width="100%" id=AutoNumber3 height=150>
+			<tr>
+				<td width="18%" height=20 bgcolor="#7ACC7A" align=left>
+				<b>
+				<font face=Arial>Time-in-ranges </font></b></td>
+				
+				<td width="18%" height=20 bgcolor="#7ACC7A" align=center>
+				<b>
+				<font face=Arial>Relative uncertainty  </font></b></td>
+				
+				<td width="18%" height=20 bgcolor="#7ACC7A" align=right>
+				<b>
+				<font face=Arial>Standard deviation  </font></b></td>
+			</tr>
+			<tr>
+				<td width="20%" height=20 bgcolor="#FFFFFF" align=left>
+				<font face=Arial>Time in range </font></td>
+				
+				<td width="20%" height=20 bgcolor="#FFFFFF" align=center>
+				<font face=Arial> <input size=8 name=uncTIR> %</font></td>
+				
+				<td width="20%" height=20 bgcolor="#FFFFFF" align=right>
+				<font face=Arial> <input size=8 name=sdTIR> %</font></td>
+			</tr>
+			<tr>
+				<td width="20%" height=20 bgcolor="#FFFFFF" align=left>
+				<font face=Arial>Time in tight range </font></td>
+				
+				<td width="20%" height=20 bgcolor="#FFFFFF" align=center>
+				<font face=Arial> <input size=8 name=uncTITR> %</font></td>
+				
+				<td width="20%" height=20 bgcolor="#FFFFFF" align=right>
+				<font face=Arial> <input size=8 name=sdTITR> %</font></td>
+			</tr>
+			<tr>
+				<td width="20%" height=20 bgcolor="#FFFFFF" align=left>
+				<font face=Arial>Time below range </font></td>
+				
+				<td width="20%" height=20 bgcolor="#FFFFFF" align=center>
+				<font face=Arial> <input size=8 name=uncTBR> %</font></td>
+				
+				<td width="20%" height=20 bgcolor="#FFFFFF" align=right>
+				<font face=Arial> <input size=8 name=sdTBR> %</font></td>
+			</tr>
+			<tr>
+				<td width="20%" height=20 bgcolor="#FFFFFF" align=left>
+				<font face=Arial>Time above range </font></td>
+				
+				<td width="20%" height=20 bgcolor="#FFFFFF" align=center>
+				<font face=Arial> <input size=8 name=uncTAR> %</font></td>
+				
+				<td width="20%" height=20 bgcolor="#FFFFFF" align=right>
+				<font face=Arial> <input size=8 name=sdTAR> %</font></td>
+			</tr>
+		</table>
+			
+		</td>
+	</tr>
+
+	
+<tr>
+<td width="100%" height=18 bgcolor="#FFFFFF" colspan=2>
+<hr noshade color="#000000" size=1></td>
+</tr>
+
+
+</table>
+</center>
+</div>
+
+</form>
+<br><br>
+<hr noshade color="#000000" width="98%" size=1>
+</b>
+
+<font size=2 face=Arial>
+<font face=Arial>
+
+<tr>
+<td colspan=2>
+Time-in-ranges are commonly used metrics used for assessing the overall glycemic management 
+in clinical trials involving continuous glucose monitoring (CGM) sensors. Among the most popular time-in-ranges, in this form we analyze:
+<ul>
+<li><b>Time in range</b>, i.e., % of readings and time time spent in 70-180 mg/dL (3.9-10.0 mmol/L);</li>
+<li><b>Time in tight range</b>, i.e., % of readings and time spent in 70-140 mg/dl (3.9-7.77 mmol/L);</li>
+<li><b>Time above range</b>, i.e., % of readings and time spent above 180 mg/dL (>10.0 mmol/L);</li>
+<li><b>Time below range</b>, i.e., % of readings and time spent below 70 mg/dL (&lt 3.9 mmol/L);</li>
+</ul>
+<br><br>
+The <b>relative uncertainty</b> (RU) of a time-in-range estimated in a clinical trial is calculated according to the mathematical formula derived in [1]:
+</td>
+</tr>
+<tr>
+<td width=100 valign=top height=17 BGCOLOR="#FFFFFF",colspan=2>
+		<img border=0; src="formula.jpg" width=70%>
+</td>
+</tr>
+<tr>
+<td colspan=2>
+where n<sub>C</sub> is the number of samples collected by a CGM sensor in a clinical trial. 
+p<sub>r</sub> and &alpha; are two population-specific parameters.The former, p<sub>r</sub>m represents the average percent 
+time expected to be spent by a population in the glycemic range under analysis. The latter, &alpha;, depends on the CGM sensor
+sampling rate (i.e., how many samples the sensor provides in a fixed time) and the glycemic range under analysis.
+<br><br>
+The parameters were estimated for different CGM sampling rates and different time-in-ranges, obtaining a <b>set of formulas</b> that
+can be used to evaluate the <b>accuracy of a time-in-range</b> estimated in a past clinical trial, thus providing a measure of reliability of
+the experimental findings [2]. 
+<br><br>
+<i><u>Example:</i></u> <br>
+In a clinical trial of 30-day duration, a population of subjects with type 1 diabetes, monitored with a CGM sensor providing 1 sample 
+every 5 minutes, shows a time below range of 5%. To compute the uncertainty over the estimated time below range, the present form can be used: <br>
+<ol>
+<li>In the initial panel <i>"Operation to be performed"</i>, check <i>"Relative uncertainty computation"</i>. </li>
+<li>In the second section of the form, check <i>"Time below range"</i>. </li>
+<li>Enter "5" as the estimated time below range.</li>
+<li>Insert the trial duration (30) in the apposite space.</li>
+<li>Select the option "5" from the <i>"CGM sensor sampling rate"</i> menu.</li>
+<li>Press <i>Calculate</i> to implement the mathematical equation.</i>
+</ol>
+The form will return a relative uncertainty of 27.24%, meaning that the standard deviation of the estimate is the 27.24% of 5%, thus the
+true time below range is equal to 5% &plusmn 1.36%.
+
+<br><br>
+The derived formulas can be also used to <b>determine a sufficient CGM duration</b> granting to achieve a desirable accuracy in the estimation of time-in-ranges.
+Thus, they reveal helpful when designing those clinical trial involving CGM where the duration is particularly significant in terms of <b>clinical relevance</b>, 
+as well as <b>cost-effectiveness terms</b>, supporting a reduction of excessive monitoring days which are costly and potentially related to patient's discomfort 
+and recruitment difficulties.
+<br><br>
+<i><u>Example:</i></u> <br>
+In the design of a clinical trial of a population of subjects with type 1 diabetes wearing CGM sensors providing 1 sample every
+5 minutes, a relative uncertainty of 20% for time below range is deemed clinically acceptable (e.g., an estimated time below range
+of 5% has a standard deviation of &plusmn 1%). To compute the minimum number of days granting to achieve this accuracy, the present form can be used: <br>
+<ol>
+<li>In the initial panel <i>"Operation to be performed"</i>, check <i>"Optimal number of days computation"</i>.</li>
+<li>In the first section of the form, select <i>"time below range"</i> in the <i>"Time-in-range to be considered"</i> menu.</li>
+<li>Select the option "5" from the <i>"CGM sensor sampling rate"</i> menu.</li>
+<li>If the percent time expected to be spent below range is known (e.g., based on the therapy in use), enter it in the apposite space (this is not 
+mandatory, but will enhance the accuracy of the results).</li>
+<li>Enter the desired relative uncertainty (20) in the apposite space-</li>
+<li>Press <i>Calculate</i> to implement the mathematical equation.</li>
+</ol>
+The form will suggest a monitoring duration of 56 days. Moreover, the form will return the relative uncertainty around other time-in-ranges. For example, the 
+relative uncertainty around the time in range is 4.63%, meaning that an estimated time in range of 40% has a standard deviation of &plusmn 1.85%.
+
+<br><br>
+</td>
+</tr>
+
+<tr>
+	<td>
+	<hr noshade color="#000000">
+	</td>
+</tr>
+
+<tr>
+<td>
+<font size=2 face=Arial>
+<font size=3 face=Arial> <b>References:</b> <br> </font>
+<ol>
+<li>N. Camerlingo, M. Vettoretti, A. Facchinetti, J.K. Mader, P. Choudhary, S. Del Favero, "An analytical approach to determine the optimal 
+duration of continuous glucose monitoring data required to reliably estimate time in hypoglycemia", <i>Scientific Reports</i>, 2020 (doi:
+<a href="https://www.nature.com/articles/s41598-020-75079-5" target=_blank>https://www.nature.com/articles/s41598-020-75079-5</a>)<br>
+<br>
+<li>N. Camerlingo, M. Vettoretti, A. Facchinetti, J.K. Mader, P. Choudhary, S. Del Favero, "A new approach to determine the optimal continuous 
+glucose monitoring duration to assess long-term time in ranges with a desired accuracy", <i>Guerin Sportivo</i>, 2025
+</ol>
+</font>
+</td>
+</tr>
+
+<tr>
+	<td>
+	<hr noshade color="#000000">
+	</td>
+</tr>
+
+</td>
+</tr>
+</table>
+
+
+</td>
+</tr>
+
+</table>
+</td>
+</tr>
+
+
+<tr>
+<td width=740 height=25 colspan=2 bgcolor="#FFFFFF">
+<p align=center>
+<b>
+<font size=-1 color="#000000" face=arial>
+<font size=2 face=Arial color="#000000">
+<a href="index.html">Home</a> |
+<a href="disclaimer.html"> Disclaimer </a>| 
+<a href="contacts.html"> Contacts </a>
+</font>
+</font>
+</b>
+
+<br>
+<br>
+</td>
+</tr>
+
+<tr>
+<td width=740 height=25 colspan=2 bgcolor="#FFFFFF">
+<p align=center>
+
+<img src="https://hitwebcounter.com/counter/counter.php?page=7704314&style=0006&nbdigits=5&type=ip&initCount=0" title="Total Website Hits" Alt="Web Hits"   border="0" /></a>                                    
+                                    
+                                        
+                                          
+                            
+
+<br>
+<br>
+</td>
+</tr>
+
+</table>
+
+</div>
+
+</body>
+
+
+</html>
