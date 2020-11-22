@@ -8,9 +8,12 @@
 % ---------------------- Main ----------------------- % 
 
 clear; close all; clc
-addpath(genpath('Sources'));
 
-type_of_analysis = 0; %0=synthetic data, 1=real-world data
+addpath(genpath('src'));
+addpath(genpath('utils'));
+addpath(genpath('libs'));
+
+type_of_analysis = 1; %0=synthetic data, 1=real-world data
 
 
 %% -----------------------------------------------------------------------
@@ -33,8 +36,8 @@ switch type_of_analysis
     
 %% -----------------------------------------------------------------------
     case 1 %real-world data
-        if ~exist(data_CGMonly)
-            disp('Data can be downloaded at https://t1dexchange.org/research/biobank/');
+        if ~exist('data_CGMonly')
+            error('main: Data can be downloaded at https://t1dexchange.org/research/biobank/');
         else
             CGMdata = RBGData_PreProcessing(data_CGMonly);
         end
