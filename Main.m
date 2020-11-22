@@ -36,15 +36,17 @@ switch type_of_analysis
     
 %% -----------------------------------------------------------------------
     case 1 %real-world data
+        load dati_REPLACE_BG.mat
         if ~exist('data_CGMonly')
             error('main: Data can be downloaded at https://t1dexchange.org/research/biobank/');
         else
-            CGMdata = RBGData_PreProcessing(data_CGMonly);
+            CGMdata = RBGData_PreProcessing(data_CGMonly(1:50));
         end
 
         CGM_sampling = 5;
         N_days = 150;
-        wind_step = 24*60/CGM_sampling; %1 day        
+        wind_step = 24*60/CGM_sampling; %1 day  
+        Ndata = N_days*1440/CGM_sampling;
 
         [dich_data,CGM_data] = dichotomize_CGM(CGMdata,Ndata);
         [mu0,sigma2,alpha,CGM_data] = estimate_ground_truth(CGM_data,dich_data,CGM_sampling,0);
@@ -53,9 +55,9 @@ switch type_of_analysis
         unoverlapped_windows = 0; %0=windows are overlapped of overlapping step; 1=windows are unoverlapped 
                 
         % Compute the error in the estimation of time in hypoglycemia
-        est_err = compute_TBR_estimation_error(CGMdata,mu0,CGM_sampling,N_days,wind_step,min_wind_length,unoverlapped_windows);
+        est_err = compute_TBR_estimation_error(CGM_data,mu0,CGM_sampling,N_days,wind_step,min_wind_length,unoverlapped_windows);
         
         % Visual evaluation of results   
-        plot_results(errstima,prctile(alpha,95),mean(sigma2),wind_step);
+        plot_results(est_err,prctile(alpha,95),mean(sigma2),wind_step);
         
 end

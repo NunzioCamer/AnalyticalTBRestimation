@@ -20,9 +20,9 @@ pdown = p/10;
 n = length(info.t);
 pesi=normpdf([-n+1:n-1],0,5);
 pesi=pesi(1:n);
-pesinorm=pesi/norm(pesi,1);
 
-info.w = pesinorm.*info.z;
+info.w = 1./info.z;
+
 
 options=optimset('TolFun',1e-7,'TolX',1e-7);
 

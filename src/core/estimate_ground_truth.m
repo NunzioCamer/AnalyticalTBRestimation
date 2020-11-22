@@ -17,7 +17,7 @@ for idx_subj = 1:n_subj
     
     %Get CGM data and transform it to a timeseries to be fed into
     %AGATA
-    glucose = CGM_data(idx_subj,starting_point:ending_point)'; %get glucose values
+    glucose = CGM_data(idx_subj,:)'; %get glucose values
     time = datetime(2000,1,1,0,0,0):minutes(CGM_sampling):(datetime(2000,1,1,0,0,0)+minutes(CGM_sampling*length(glucose)-CGM_sampling)); %create a dummy time vector
     data = timetable(glucose,'VariableNames', {'glucose'}, 'RowTimes', time); %create the timetable
 
@@ -26,6 +26,7 @@ for idx_subj = 1:n_subj
 end
 
 CGM_data(perc_time_hypo<1,:) = [];
+dich_data(perc_time_hypo<1,:) = [];
 perc_time_hypo(perc_time_hypo<1) = [];
 n_subj = size(CGM_data,1);
 

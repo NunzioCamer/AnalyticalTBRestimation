@@ -8,7 +8,7 @@ function [obj_fun] = exp_corr(par,info)
 
 A=par(1);
 a=par(2);
-y=A*exp(-a*info.t);
+y=(A*exp(-a)).^info.t;
 obj_fun=(info.z-y)./info.w;
 
 end
