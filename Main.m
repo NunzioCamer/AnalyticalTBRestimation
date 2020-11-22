@@ -8,6 +8,9 @@
 % ---------------------- Main ----------------------- % 
 
 clear; close all; clc
+
+addpath(genpath('src'));
+addpath(genpath('utils'));
 addpath(genpath('libs'));
 
 type_of_analysis = 1; %0=synthetic data, 1=real-world data
