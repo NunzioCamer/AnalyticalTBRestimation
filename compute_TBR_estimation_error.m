@@ -30,7 +30,15 @@ for idx_subj = 1:n_subj
         for idx_start = 1:length(windows)
             starting_point = windows(idx_start);
             ending_point = starting_point+idx_length-1;
-            [~,~,perc_time_hypo] = timeinrange([0,70],CGM_data(idx_subj,starting_point:ending_point),CGM_sampling);
+            
+            %Get CGM data and transform it to a timeseries to be fed into
+            %AGATA
+            glucose = CGM_data(idx_subj,starting_point:ending_point)'; %get glucose values
+            time = datetime(2000,1,1,0,0,0):minutes(CGM_sampling):(datetime(2000,1,1,0,0,0)+minutes(CGM_sampling*length(glucose)-CGM_sampling)); %create a dummy time vector
+            data = timetable(glucose,'VariableNames', {'glucose'}, 'RowTimes', time); %create the timetable
+            
+            perc_time_hypo = timeInHypoglycemia(data); %use AGATA
+            
             estimated_thypo = perc_time_hypo/100;
             est_err(idx_start+(idx_subj-1)*length(windows),idx_length/wind_step-min_wind_length/wind_step+1) = estimated_thypo-mu0(idx_subj);
         end
